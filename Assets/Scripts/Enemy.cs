@@ -5,7 +5,6 @@ namespace Battle
     internal interface IEnemy
     {
         void Update(DataPlayer dataPlayer);
-
     }
 
     internal class Enemy : IEnemy
@@ -18,7 +17,8 @@ namespace Battle
         private int _moneyPlayer;
         private int _healthPlayer;
         private int _powerPlayer;
-        
+        private int _crimePlayer;
+
         public Enemy (string name)
         {
             _name = name;
@@ -37,9 +37,12 @@ namespace Battle
                 case DataType.Power:
                     _powerPlayer = dataPlayer.Value;
                     break;
+                case DataType.Crime:
+                    _crimePlayer = dataPlayer.Value;
+                    break;
             }
 
-            Debug.Log($"Notified {_name} change to {dataPlayer}");
+            Debug.Log($"Notified {_name} change to {dataPlayer.TitleData}");
         }
 
         public int CalcPower()
@@ -53,5 +56,8 @@ namespace Battle
 
         public int CalcHealth() =>
             _healthPlayer > MaxHealthPlayer ? 100 : 5;
+
+        public int CalcCrime() =>
+            _crimePlayer > MaxHealthPlayer ? 100 : 5;
     }
 }

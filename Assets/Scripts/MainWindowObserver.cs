@@ -11,6 +11,7 @@ namespace Battle
         [SerializeField] private TMP_Text _countMoneyText;
         [SerializeField] private TMP_Text _countHealthText;
         [SerializeField] private TMP_Text _countPowerText;
+        [SerializeField] private TMP_Text _countCrimeText;
 
         [Header("Enemy Stats")]
         [SerializeField] private TMP_Text _countPowerEnemyText;
@@ -29,14 +30,20 @@ namespace Battle
         
         [Header("Gameplay Buttons")]
         [SerializeField] private Button _fightButton;
+        [SerializeField] private Button _crimeLowButton;
+        [SerializeField] private Button _crimeHighButton;
 
         private int _allCountMoneyPlayer;
         private int _allCountHealthPlayer;
         private int _allCountPowerPlayer;
+        private int _allCountCrimePlayer;
 
         private DataPlayer _money;
         private DataPlayer _health;
         private DataPlayer _power;
+        private DataPlayer _crime;
+
+        [SerializeField] private int _crimeTriggerLevel;
 
         private Enemy _enemy;
 
@@ -46,6 +53,7 @@ namespace Battle
             _money = new DataPlayer(DataType.Money, "Money");
             _health = new DataPlayer(DataType.Health, "Health");
             _power = new DataPlayer(DataType.Power, "Power");
+            _crime = new DataPlayer(DataType.Crime, "Crime");
 
             _money.Attach(_enemy);
             _health.Attach(_enemy);
@@ -59,6 +67,9 @@ namespace Battle
 
             _addPowerButton.onClick.AddListener(IncreasePower);
             _minusPowerButton.onClick.AddListener(DecreasePower);
+
+            _crimeLowButton.onClick.AddListener(DecreaseCrime);
+            _crimeHighButton.onClick.AddListener(IncreaseCrime);
 
             _fightButton.onClick.AddListener(Fight);
         }
@@ -77,6 +88,9 @@ namespace Battle
 
             _addPowerButton.onClick.RemoveAllListeners();
             _minusPowerButton.onClick.RemoveAllListeners();
+
+            _crimeLowButton.onClick.RemoveAllListeners();
+            _crimeHighButton.onClick.RemoveAllListeners();
 
             _fightButton.onClick.RemoveAllListeners();
         }
@@ -99,6 +113,12 @@ namespace Battle
         private void ChangePower(bool isAddCount) =>
             ChangeValue(DataType.Power, isAddCount);
 
+        private void IncreaseCrime() => ChangeCrime(true);
+        private void DecreaseCrime() => ChangeCrime(false);
+
+        private void ChangeCrime(bool isAddCount) =>
+            ChangeValue(DataType.Crime, isAddCount);
+
         private void ChangeValue(DataType dataType, bool isAddCount)
         {
             int changeValue = isAddCount ? 1 : -1;
@@ -114,6 +134,10 @@ namespace Battle
                 case DataType.Power:
                     _allCountPowerPlayer += changeValue;
                     break;
+                case DataType.Crime:
+                    _allCountCrimePlayer += changeValue;
+                    ModifyFightButton(_allCountCrimePlayer);
+                    break;
             }
 
             ChangeDataWindow(dataType);
@@ -126,10 +150,16 @@ namespace Battle
             string textLabel = GetDataTextLabel(dataType);
             DataPlayer dataPlayer = GetDataPlayer(dataType);
 
-            textComponent.text = $"{textLabel} {currentPlayerCount}";
+            textComponent.text = $"{textLabel}: {currentPlayerCount}";
             dataPlayer.Value = currentPlayerCount;
 
             _countPowerEnemyText.text = $"Enemy Power {_enemy.CalcPower()}";
+
+        }
+
+        private void ModifyFightButton(int _allCountCrimePlayer)
+        {
+            _fightButton.interactable = (_allCountCrimePlayer >= _crimeTriggerLevel) ? true : false;
         }
 
         private int GetCurrentPlayerCount(DataType dataType) =>
@@ -138,6 +168,7 @@ namespace Battle
                 DataType.Health => _allCountHealthPlayer,
                 DataType.Money => _allCountMoneyPlayer,
                 DataType.Power => _allCountPowerPlayer,
+                DataType.Crime => _allCountCrimePlayer,
                 _ => default
             };
 
@@ -147,6 +178,7 @@ namespace Battle
                 DataType.Health => _countHealthText,
                 DataType.Money => _countMoneyText,
                 DataType.Power => _countPowerText,
+                DataType.Crime => _countCrimeText,
                 _ => null
             };
 
@@ -156,6 +188,7 @@ namespace Battle
                 DataType.Health => "Player Health",
                 DataType.Money => "Player Money",
                 DataType.Power => "Player Power",
+                DataType.Crime => "Player Crime",
                 _ => null
             };
 
@@ -165,6 +198,7 @@ namespace Battle
                 DataType.Health => _health,
                 DataType.Money => _money,
                 DataType.Power => _power,
+                DataType.Crime => _crime,
                 _ => null
             };
 

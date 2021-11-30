@@ -22,7 +22,7 @@ namespace Battle
                     return;
 
                 _value = value;
-                Notify(DataType.Health);
+                Notify(_dataType);
             }
         }
 
