@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Battle
+namespace BattleScripts
 {
     internal interface IEnemy
     {
@@ -9,20 +9,22 @@ namespace Battle
 
     internal class Enemy : IEnemy
     {
-        private const float KMoney = 5;
-        private const float KPower = 1.5f;
+        private const float KMoney = 5f;
+        private const float KHealth = 7f;
+        private const float KPower = 5f;
+        private const float KCrime = 10f;
+        private const float KSummary = 0.2f;
         private const float MaxHealthPlayer = 20;
 
-        private string _name;
+        private readonly string _name;
+
         private int _moneyPlayer;
         private int _healthPlayer;
         private int _powerPlayer;
         private int _crimePlayer;
 
-        public Enemy (string name)
-        {
+        public Enemy(string name) =>
             _name = name;
-        }
 
         public void Update(DataPlayer dataPlayer)
         {
@@ -42,22 +44,18 @@ namespace Battle
                     break;
             }
 
-            Debug.Log($"Notified {_name} change to {dataPlayer.TitleData}");
+            Debug.Log($"Notified {_name} change to {dataPlayer}");
         }
 
         public int CalcPower()
         {
-            int KHealth = CalcHealth();
             float moneyRatio = _moneyPlayer / KMoney;
+            float healthRatio = _healthPlayer / KHealth;
             float powerRatio = _powerPlayer / KPower;
+            float crimeRatio = _crimePlayer / KCrime;
+            float summaryRatio = moneyRatio + healthRatio + powerRatio + crimeRatio;
 
-            return (int)(moneyRatio + KHealth + powerRatio);
+            return (int)(summaryRatio * KSummary * MaxHealthPlayer);
         }
-
-        public int CalcHealth() =>
-            _healthPlayer > MaxHealthPlayer ? 100 : 5;
-
-        public int CalcCrime() =>
-            _crimePlayer > MaxHealthPlayer ? 100 : 5;
     }
 }
