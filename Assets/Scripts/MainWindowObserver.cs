@@ -3,9 +3,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Battle
+namespace BattleScripts
 {
-    internal class MainWindowObserver : MonoBehaviour
+    public class MainWindowObserver : MonoBehaviour
     {
         [Header("Player Stats")]
         [SerializeField] private TMP_Text _countMoneyText;
@@ -17,8 +17,8 @@ namespace Battle
         [SerializeField] private TMP_Text _countPowerEnemyText;
 
         [Header("Money Buttons")]
-        [SerializeField] private Button _addCoinsButton;
-        [SerializeField] private Button _minusCoinsButton;
+        [SerializeField] private Button _addMoneyButton;
+        [SerializeField] private Button _minusMoneyButton;
 
         [Header("Health Buttons")]
         [SerializeField] private Button _addHealthButton;
@@ -27,11 +27,14 @@ namespace Battle
         [Header("Power Buttons")]
         [SerializeField] private Button _addPowerButton;
         [SerializeField] private Button _minusPowerButton;
-        
-        [Header("Gameplay Buttons")]
+
+        [Header("Crime Buttons")]
+        [SerializeField] private Button _addCrimeButton;
+        [SerializeField] private Button _minusCrimeButton;
+
+        [Header("Other Buttons")]
         [SerializeField] private Button _fightButton;
-        [SerializeField] private Button _crimeLowButton;
-        [SerializeField] private Button _crimeHighButton;
+        [SerializeField] private Button _escapeButton;
 
         private int _allCountMoneyPlayer;
         private int _allCountHealthPlayer;
@@ -43,24 +46,48 @@ namespace Battle
         private DataPlayer _power;
         private DataPlayer _crime;
 
-        [SerializeField] private int _crimeTriggerLevel;
-
         private Enemy _enemy;
 
         private void Start()
         {
             _enemy = new Enemy("Enemy Flappy");
-            _money = new DataPlayer(DataType.Money, "Money");
-            _health = new DataPlayer(DataType.Health, "Health");
-            _power = new DataPlayer(DataType.Power, "Power");
-            _crime = new DataPlayer(DataType.Crime, "Crime");
 
-            _money.Attach(_enemy);
-            _health.Attach(_enemy);
-            _power.Attach(_enemy);
+            _money = CreateDataPlayer(DataType.Money);
+            _health = CreateDataPlayer(DataType.Health);
+            _power = CreateDataPlayer(DataType.Power);
+            _crime = CreateDataPlayer(DataType.Crime);
 
-            _addCoinsButton.onClick.AddListener(IncreaseMoney);
-            _minusCoinsButton.onClick.AddListener(DecreaseMoney);
+            Subscribe();
+        }
+
+        private void OnDestroy()
+        {
+            DisposeDataPlayer(ref _money);
+            DisposeDataPlayer(ref _health);
+            DisposeDataPlayer(ref _power);
+            DisposeDataPlayer(ref _crime);
+
+            Unsubscribe();
+        }
+
+        private DataPlayer CreateDataPlayer(DataType dataType)
+        {
+            DataPlayer dataPlayer = new DataPlayer(dataType);
+            dataPlayer.Attach(_enemy);
+
+            return dataPlayer;
+        }
+
+        private void DisposeDataPlayer(ref DataPlayer dataPlayer)
+        {
+            dataPlayer.Detach(_enemy);
+            dataPlayer = null;
+        }
+
+        private void Subscribe()
+        {
+            _addMoneyButton.onClick.AddListener(IncreaseMoney);
+            _minusMoneyButton.onClick.AddListener(DecreaseMoney);
 
             _addHealthButton.onClick.AddListener(IncreaseHealth);
             _minusHealthButton.onClick.AddListener(DecreaseHealth);
@@ -68,20 +95,17 @@ namespace Battle
             _addPowerButton.onClick.AddListener(IncreasePower);
             _minusPowerButton.onClick.AddListener(DecreasePower);
 
-            _crimeLowButton.onClick.AddListener(DecreaseCrime);
-            _crimeHighButton.onClick.AddListener(IncreaseCrime);
+            _addCrimeButton.onClick.AddListener(IncreaseCrime);
+            _minusCrimeButton.onClick.AddListener(DecreaseCrime);
 
             _fightButton.onClick.AddListener(Fight);
+            _escapeButton.onClick.AddListener(Escape);
         }
 
-        private void OnDestroy()
+        private void Unsubscribe()
         {
-            _money.Detach(_enemy);
-            _health.Detach(_enemy);
-            _power.Detach(_enemy);
-
-            _addCoinsButton.onClick.RemoveAllListeners();
-            _minusCoinsButton.onClick.RemoveAllListeners();
+            _addMoneyButton.onClick.RemoveAllListeners();
+            _minusMoneyButton.onClick.RemoveAllListeners();
 
             _addHealthButton.onClick.RemoveAllListeners();
             _minusHealthButton.onClick.RemoveAllListeners();
@@ -89,126 +113,99 @@ namespace Battle
             _addPowerButton.onClick.RemoveAllListeners();
             _minusPowerButton.onClick.RemoveAllListeners();
 
-            _crimeLowButton.onClick.RemoveAllListeners();
-            _crimeHighButton.onClick.RemoveAllListeners();
+            _addCrimeButton.onClick.RemoveAllListeners();
+            _minusCrimeButton.onClick.RemoveAllListeners();
 
             _fightButton.onClick.RemoveAllListeners();
+            _escapeButton.onClick.RemoveAllListeners();
         }
 
-        private void IncreaseMoney() => ChangeMoney(true);
-        private void DecreaseMoney() => ChangeMoney(false);
+        private void IncreaseMoney() => IncreaseValue(ref _allCountMoneyPlayer, DataType.Money);
+        private void DecreaseMoney() => DecreaseValue(ref _allCountMoneyPlayer, DataType.Money);
 
-        private void ChangeMoney(bool isAddCount) =>
-            ChangeValue(DataType.Money, isAddCount);
+        private void IncreaseHealth() => IncreaseValue(ref _allCountHealthPlayer, DataType.Health);
+        private void DecreaseHealth() => DecreaseValue(ref _allCountHealthPlayer, DataType.Health);
 
-        private void IncreaseHealth() => ChangeHealth(true);
-        private void DecreaseHealth() => ChangeHealth(false);
+        private void IncreasePower() => IncreaseValue(ref _allCountPowerPlayer, DataType.Power);
+        private void DecreasePower() => DecreaseValue(ref _allCountPowerPlayer, DataType.Power);
 
-        private void ChangeHealth(bool isAddCount) =>
-            ChangeValue(DataType.Health, isAddCount);
+        private void IncreaseCrime() => IncreaseValue(ref _allCountCrimePlayer, DataType.Crime);
+        private void DecreaseCrime() => DecreaseValue(ref _allCountCrimePlayer, DataType.Crime);
 
-        private void IncreasePower() => ChangePower(true);
-        private void DecreasePower() => ChangePower(false);
+        private void IncreaseValue(ref int value, DataType dataType) => AddToValue(ref value, 1, dataType);
+        private void DecreaseValue(ref int value, DataType dataType) => AddToValue(ref value, -1, dataType);
 
-        private void ChangePower(bool isAddCount) =>
-            ChangeValue(DataType.Power, isAddCount);
-
-        private void IncreaseCrime() => ChangeCrime(true);
-        private void DecreaseCrime() => ChangeCrime(false);
-
-        private void ChangeCrime(bool isAddCount) =>
-            ChangeValue(DataType.Crime, isAddCount);
-
-        private void ChangeValue(DataType dataType, bool isAddCount)
+        private void AddToValue(ref int value, int addition, DataType dataType)
         {
-            int changeValue = isAddCount ? 1 : -1;
-
-            switch (dataType)
-            {
-                case DataType.Health:
-                    _allCountHealthPlayer += changeValue;
-                    break;
-                case DataType.Money:
-                    _allCountMoneyPlayer += changeValue;
-                    break;
-                case DataType.Power:
-                    _allCountPowerPlayer += changeValue;
-                    break;
-                case DataType.Crime:
-                    _allCountCrimePlayer += changeValue;
-                    ModifyFightButton(_allCountCrimePlayer);
-                    break;
-            }
-
-            ChangeDataWindow(dataType);
+            value += addition;
+            UpdateEscapeButtonVisibility();
+            ChangeDataWindow(value, dataType);
         }
 
-        private void ChangeDataWindow(DataType dataType)
+        private void ChangeDataWindow(int countChangeData, DataType dataType)
         {
-            int currentPlayerCount = GetCurrentPlayerCount(dataType);
-            TMP_Text textComponent = GetDataTextComponent(dataType);
-            string textLabel = GetDataTextLabel(dataType);
             DataPlayer dataPlayer = GetDataPlayer(dataType);
+            TMP_Text textComponent = GetTextComponent(dataType);
+            string text = $"Player {dataType:F}: {countChangeData}";
 
-            textComponent.text = $"{textLabel}: {currentPlayerCount}";
-            dataPlayer.Value = currentPlayerCount;
+            dataPlayer.Value = countChangeData;
+            textComponent.text = text;
 
-            _countPowerEnemyText.text = $"Enemy Power {_enemy.CalcPower()}";
-
+            int enemyPower = _enemy.CalcPower();
+            _countPowerEnemyText.text = $"Enemy Power {enemyPower}";
         }
 
-        private void ModifyFightButton(int _allCountCrimePlayer)
-        {
-            _fightButton.interactable = (_allCountCrimePlayer >= _crimeTriggerLevel) ? true : false;
-        }
-
-        private int GetCurrentPlayerCount(DataType dataType) =>
+        private TMP_Text GetTextComponent(DataType dataType) =>
             dataType switch
             {
-                DataType.Health => _allCountHealthPlayer,
-                DataType.Money => _allCountMoneyPlayer,
-                DataType.Power => _allCountPowerPlayer,
-                DataType.Crime => _allCountCrimePlayer,
-                _ => default
-            };
-
-        private TMP_Text GetDataTextComponent(DataType dataType) =>
-            dataType switch
-            {
-                DataType.Health => _countHealthText,
                 DataType.Money => _countMoneyText,
+                DataType.Health => _countHealthText,
                 DataType.Power => _countPowerText,
                 DataType.Crime => _countCrimeText,
-                _ => null
-            };
-
-        private string GetDataTextLabel(DataType dataType) =>
-            dataType switch
-            {
-                DataType.Health => "Player Health",
-                DataType.Money => "Player Money",
-                DataType.Power => "Player Power",
-                DataType.Crime => "Player Crime",
-                _ => null
+                _ => throw new ArgumentException($"Wrong {nameof(DataType)}")
             };
 
         private DataPlayer GetDataPlayer (DataType dataType) =>
             dataType switch
             {
-                DataType.Health => _health,
                 DataType.Money => _money,
+                DataType.Health => _health,
                 DataType.Power => _power,
                 DataType.Crime => _crime,
-                _ => null
+                _ => throw new ArgumentException($"Wrong {nameof(DataType)}")
             };
+
+        private void UpdateEscapeButtonVisibility()
+        {
+            const int minCrimeToUse = 0;
+            const int maxCrimeToUse = 2;
+            const int minCrimeToShow = 0;
+            const int maxCrimeToShow = 5;
+
+            bool canUse = minCrimeToUse <= _allCountCrimePlayer && _allCountCrimePlayer <= maxCrimeToUse;
+            bool canShow = minCrimeToShow <= _allCountCrimePlayer && _allCountCrimePlayer <= maxCrimeToShow;
+
+            _escapeButton.interactable = canUse;
+            _escapeButton.gameObject.SetActive(canShow);
+        }
 
         private void Fight()
         {
-            bool isWin = _allCountPowerPlayer >= _enemy.CalcPower();
-            string color = isWin ? "07FF00" : "FF0000";
-            string result = isWin ? "Win" : "Lose";
+            int enemyPower = _enemy.CalcPower();
+            bool isVictory = _allCountPowerPlayer >= enemyPower;
 
-            Debug.Log($"<color=#{color}>{result}!!!</color>");
+            string color = isVictory ? "#07FF00" : "#FF0000";
+            string message = isVictory ? "Win" : "Lose";
+
+            Debug.Log($"<color={color}>{message}!!!</color>");
+        }
+
+        private void Escape()
+        {
+            string color = "#FFB202";
+            string message = "Escaped";
+
+            Debug.Log($"<color={color}>{message}!!!</color>");
         }
     }
 }

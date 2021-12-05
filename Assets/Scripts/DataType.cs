@@ -1,4 +1,4 @@
-﻿namespace Battle
+﻿namespace BattleScripts
 {
     internal enum DataType
     {

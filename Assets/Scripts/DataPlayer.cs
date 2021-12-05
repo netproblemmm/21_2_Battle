@@ -1,35 +1,23 @@
 using System.Collections.Generic;
-using UnityEngine;
 
-namespace Battle
+namespace BattleScripts
 {
     internal class DataPlayer
     {
-        private DataType _dataType;
+        private readonly List<IEnemy> _enemies;
         private int _value;
 
-        private readonly List<IEnemy> _enemies;
-
-        public string TitleData { get; }
         public DataType DataType { get; }
 
         public int Value
         {
             get => _value;
-            set
-            {
-                if (_value == value)
-                    return;
-
-                _value = value;
-                Notify(_dataType);
-            }
+            set => SetValue(value);
         }
 
-        public DataPlayer(DataType dataType, string titleData)
+        public DataPlayer(DataType dataType)
         {
             DataType = dataType;
-            TitleData = titleData;
             _enemies = new List<IEnemy>();
         }
 
@@ -37,12 +25,19 @@ namespace Battle
 
         public void Detach(IEnemy enemy) => _enemies.Remove(enemy);
 
-        protected void Notify(DataType dataType)
+        protected void Notify()
         {
-            foreach (IEnemy enemy in _enemies)
-            {
-                enemy.Update(this);
-            }
+            foreach (var investor in _enemies)
+                investor.Update(this);
+        }
+
+        private void SetValue(int value)
+        {
+            if (_value == value)
+                return;
+
+            _value = value;
+            Notify();
         }
     }
 }
